@@ -9,7 +9,7 @@
 export default {
   data() {
     return {
-      message: "Hello Vue!. I am on Home Index Page",
+      message: "Hello Vue!. I am on Home Index Page!",
     }
   },
 }
