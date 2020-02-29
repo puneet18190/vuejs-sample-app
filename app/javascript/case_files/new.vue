@@ -1,49 +1,60 @@
 <template>
   <div id="app">
     <p>{{ message }}</p>
-    <label>Participant Name:</label>
-    <input type="text" name="participant_name" v-model="case_file.participant_name" />
-    <br/><br/>
-    <label>Location:</label>
-    <input type="text" name="location" v-model="case_file.location" />
-    <button @click.prevent="submitCaseFile()">Submit</button>
+    <div v-if="showNewCaseFile">
+      <label>Participant Name:</label>
+      <input type="text" name="participant_name" v-model="case_file.participant_name" />
+      <br/><br/>
+      <label>Location:</label>
+      <input type="text" name="location" v-model="case_file.location" />
+      <button @click.prevent="submitCaseFile()">Submit</button>
+    </div>
+
+    <div v-if="uploadMedia">
+      <input type="file" ref="inputFile" @change=uploadFile() multiple>Image
+      <input type="file" name="vide" />Video
+    </div>
   </div>
 
 </template>
 
 <script type="text/javascript">
-import axios from 'axios';
+// import axios from 'axios';
 
 export default {
   data() {
     return {
-      message: "New Case File",
+      message: "Case File",
       case_file: {
         participant_name: null,
         location: null,
-      }
+      },
+      showNewCaseFile: true,
+      uploadMedia: false,
+      inputPicture: null,
     }
   },
   methods: {
     submitCaseFile(){
-      console.log('submitCaseFile', this.case_file);
-      var token = document.getElementsByName('csrf-token')[0].content;
-      axios.post(`/case_files`, {
-        body: this.case_file,
-        headers: {
-          commom: {
-          // 'Content-Type': 'application/json',
-          'X-CSRF-Token': token
-          }
-        }
-      })
+      var _this = this;
+      this.$http.post('/case_files', { payload: this.case_file })
       .then(response => {
-        debugger
+        _this.showNewCaseFile = false;
+        _this.uploadMedia = true;
       })
-      .catch(e => {
-        this.errors.push(e)
-      })
-    }
+    },
+    uploadFile: function() {
+      this.inputPicture = this.$refs.inputFile.files;
+      var formData = new FormData()
+      for(var i=0;i<this.inputPicture.length;i++){
+        formData.append('picture[]', this.$refs.inputFile.files[i]);
+      }
+      this.$http.post('/upload_image', formData, {headers: {'Content-Type': 'multipart/form-data'}}).then(response => {
+        // success callback
+      }, response => {
+        // error callback
+      });
+    },
   }
 }
 </script>

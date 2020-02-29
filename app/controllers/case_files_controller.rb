@@ -3,6 +3,12 @@ class CaseFilesController < ApplicationController
   end
 
   def create
-  	debugger
+    payload = params[:payload]
+    render json: {status: true}
+  end
+
+  def upload_image
+    payload = params[:payload]
+    render json: {status: true}
   end
 end
