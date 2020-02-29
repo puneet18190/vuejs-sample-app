@@ -11,8 +11,14 @@
     </div>
 
     <div v-if="uploadMedia">
-      <input type="file" ref="inputFile" @change=uploadFile() multiple>Image
-      <input type="file" name="vide" />Video
+      <input type="file" ref="inputFile" @change="uploadFile('image')" multiple>Image
+      <input type="file" ref="inputVideo" @change="uploadFile('video')" multiple>Video
+    </div>
+
+    <div v-if="listMedia">
+      <div v-for="(media, index) in media_files" :key="index">
+        <input type="text" name="description" @change="setDescription(index)">
+      </div>
     </div>
   </div>
 
@@ -32,6 +38,8 @@ export default {
       showNewCaseFile: true,
       uploadMedia: false,
       inputPicture: null,
+      listMedia: false,
+      media_files: [],
     }
   },
   methods: {
@@ -41,19 +49,31 @@ export default {
       .then(response => {
         _this.showNewCaseFile = false;
         _this.uploadMedia = true;
+        _this.listMedia = false
       })
     },
-    uploadFile: function() {
-      this.inputPicture = this.$refs.inputFile.files;
-      var formData = new FormData()
-      for(var i=0;i<this.inputPicture.length;i++){
-        formData.append('picture[]', this.$refs.inputFile.files[i]);
+    uploadFile: function(file_type) {
+      // this.inputPicture = this.$refs.inputFile.files;
+      // var formData = new FormData()
+      // for(var i=0;i<this.inputPicture.length;i++){
+      //   formData.append('picture[]', this.$refs.inputFile.files[i]);
+      // }
+      // var _this = this
+      // this.$http.post('/upload_image', formData, {headers: {'Content-Type': 'multipart/form-data'}}).then(response => {
+      //   console.log('success');
+      //   _this.listMedia = true
+      //   _this.uploadMedia = false
+      //   _this.showNewCaseFile = false
+      // }, response => {
+      //   console.log('fail');
+      // });
+      var files = this.$refs.inputFile.files;
+      for(var i=0; i < files.length; i++){
+        this.media_files.push({ file: files[i], type: file_type })
       }
-      this.$http.post('/upload_image', formData, {headers: {'Content-Type': 'multipart/form-data'}}).then(response => {
-        // success callback
-      }, response => {
-        // error callback
-      });
+      this.listMedia = true
+      this.uploadMedia = false
+      this.showNewCaseFile = false
     },
   }
 }
