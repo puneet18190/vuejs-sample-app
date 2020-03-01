@@ -11,14 +11,17 @@
     </div>
 
     <div v-if="uploadMedia">
-      <input type="file" ref="inputFile" @change="uploadFile('image')" multiple>Image
-      <input type="file" ref="inputVideo" @change="uploadFile('video')" multiple>Video
+      <input type="file" ref="inputFile" @change="onFileChange($event)" multiple>Image
+      <input type="file" ref="inputVideo" @change="onFileChange('video')" multiple>Video
     </div>
 
     <div v-if="listMedia">
       <div v-for="(media, index) in media_files" :key="index">
-        <input type="text" name="description" @change="setDescription(index)">
+        <p>Media type: {{ media.type }}</p>
+        <img :src="media.image" />
+        <textarea name="description" @change="setDescription(media, index, $event)" />
       </div>
+      <button @click.prevent="createCaseFile()">Submit</button>
     </div>
   </div>
 
@@ -45,36 +48,58 @@ export default {
   methods: {
     submitCaseFile(){
       var _this = this;
-      this.$http.post('/case_files', { payload: this.case_file })
-      .then(response => {
+      this.message = this.case_file.participant_name + ' '+ this.case_file.location;
+      // this.$http.post('/case_files', { payload: this.case_file })
+      // .then(response => {
         _this.showNewCaseFile = false;
         _this.uploadMedia = true;
         _this.listMedia = false
-      })
+      // })
     },
-    uploadFile: function(file_type) {
-      // this.inputPicture = this.$refs.inputFile.files;
-      // var formData = new FormData()
-      // for(var i=0;i<this.inputPicture.length;i++){
-      //   formData.append('picture[]', this.$refs.inputFile.files[i]);
-      // }
-      // var _this = this
-      // this.$http.post('/upload_image', formData, {headers: {'Content-Type': 'multipart/form-data'}}).then(response => {
-      //   console.log('success');
-      //   _this.listMedia = true
-      //   _this.uploadMedia = false
-      //   _this.showNewCaseFile = false
-      // }, response => {
-      //   console.log('fail');
-      // });
-      var files = this.$refs.inputFile.files;
+    onFileChange: function(e) {
+      var files = e.target.files || e.dataTransfer.files;
+      if (!files.length)
+        return;
       for(var i=0; i < files.length; i++){
-        this.media_files.push({ file: files[i], type: file_type })
+        this.createImage(files[i]);
       }
       this.listMedia = true
       this.uploadMedia = false
       this.showNewCaseFile = false
     },
+    createImage(file) {
+      var image = new Image();
+      var reader = new FileReader();
+
+      reader.onload = (e) => {
+        this.media_files.push({ file: file, type: 'image', image: e.target.result })
+      };
+      reader.readAsDataURL(file);
+    },
+    setDescription(media, index, e){
+      var description = e.target.value
+      media["description"] = description
+    },
+    createCaseFile(){
+      var _this = this
+      var payload = {
+        participant_name: this.case_file.participant_name,
+        location: this.case_file.location,
+        media_files: this.media_files,
+      }
+      var formData = new FormData()
+      formData.append('participant_name', this.case_file.participant_name)
+      formData.append('location', this.case_file.location)
+      for(var i=0;i<this.media_files.length;i++){
+        formData.append('media_files['+i+'][file]', this.media_files[i].file);
+        formData.append('media_files['+i+'][description]', this.media_files[i].description);
+      }
+      this.$http.post('/case_files', formData, {headers: {'Content-Type': 'multipart/form-data'}}).then(response => {
+        console.log('success');
+      }, response => {
+        console.log('fail');
+      });
+    }
   }
 }
 </script>
@@ -83,5 +108,16 @@ export default {
 p {
   font-size: 2em;
   text-align: center;
+}
+img {
+  width: 150px;
+  margin: auto;
+  display: block;
+  margin-bottom: 10px;
+}
+textarea{
+  width: 30%;
+  margin: auto;
+  display: block;
 }
 </style>
